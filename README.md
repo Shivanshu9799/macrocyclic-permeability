@@ -15,7 +15,6 @@ Classical machine learning baselines (Random Forest and SVR) for predicting the 
 - [Repository Structure](#repository-structure)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Results](#results)
 - [References](#references)
 
 ---
@@ -213,26 +212,6 @@ python svm_scaffold_split.py --csv /path/to/CycPeptMPDB_Peptide_Assay_PAMPA.csv
 
 ---
 
-## Results
-
-Both models are evaluated on the scaffold-held-out test set (molecules with unseen core ring systems).
-
-| Model | Split | R² | MAE | RMSE |
-|---|---|---|---|---|
-| Random Forest | Scaffold | *(run to obtain)* | *(run to obtain)* | *(run to obtain)* |
-| SVR (RBF) | Scaffold | *(run to obtain)* | *(run to obtain)* | *(run to obtain)* |
-
-> Update this table with your actual results after running the scripts.
-
-### Interpreting the metrics
-
-- **R²**: Fraction of variance in PAMPA explained by the model. R² = 1.0 is perfect; R² = 0.0 means the model is no better than predicting the mean.
-- **MAE**: Mean Absolute Error in log permeability units (cm/s). Lower is better.
-- **RMSE**: Root Mean Squared Error. More sensitive to large errors than MAE.
-
-Under scaffold split, R² values for classical ML models typically range from 0.3–0.6, compared to 0.6–0.8 for graph neural network approaches. The gap reflects the inherent limitation of fixed fingerprints vs. learned molecular representations for scaffold generalisation.
-
----
 
 ## References
 
