@@ -179,7 +179,7 @@ macrocyclic-permeability/
 
 ```bash
 # Clone the repository
-git clone https://github.com/<your-username>/macrocyclic-permeability.git
+git clone https://github.com/Shivanshu9799/macrocyclic-permeability.git
 cd macrocyclic-permeability
 
 # Install dependencies
