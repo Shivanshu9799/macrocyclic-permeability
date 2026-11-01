@@ -1,6 +1,13 @@
 # Macrocyclic Peptide Membrane Permeability Prediction
 
-Classical machine learning baselines (Random Forest and SVR) for predicting the PAMPA membrane permeability of cyclic peptides, evaluated under a rigorous **Murcko scaffold split** to test generalisation to entirely new molecular scaffolds.
+Classical machine learning baselines (Random Forest and SVR) for predicting the PAMPA membrane permeability of cyclic peptides, evaluated under a rigorous Murcko scaffold split to test generalisation to unseen macrocyclic chemotypes.
+
+## TL;DR
+
+- This repository predicts macrocyclic peptide membrane permeability using classical ML models.
+- It combines RDKit physicochemical descriptors with ECFP4 Morgan fingerprints to represent each peptide.
+- Performance is evaluated with a strict Murcko scaffold split, so the model is tested on novel scaffolds rather than near-identical analogues.
+- The main baselines are Random Forest and Support Vector Regression, designed for realistic drug-discovery-style generalisation.
 
 ---
 
@@ -21,7 +28,7 @@ Classical machine learning baselines (Random Forest and SVR) for predicting the 
 
 ## Biological Background
 
-**Macrocyclic peptides** are ring-shaped molecules formed by head-to-tail (or side-chain) cyclisation of amino acid chains. Unlike linear peptides, the cyclic backbone restricts conformational flexibility, which confers several drug-relevant advantages:
+**Macrocyclic peptides** are ring-shaped molecules formed by head-to-tail (or side-chain) cyclisation of amino acid chains. Unlike linear peptides, the cyclic backbone restricts conformational flexibility and can produce a remarkable balance of potency, selectivity, and cell penetration. Such molecules are attractive for drug discovery because they often combine the target engagement of biologics with the oral or membrane-permeable properties associated with small molecules.
 
 - **Metabolic stability** — reduced degradation by proteases
 - **Target selectivity** — pre-organised binding conformation
@@ -31,13 +38,13 @@ Many approved drugs are macrocyclic peptides: cyclosporine A (immunosuppressant)
 
 ### The Membrane Permeability Problem
 
-For a drug candidate to be orally bioavailable it must cross the intestinal epithelium. For most small molecules, Lipinski's "Rule of Five" predicts this reasonably well. Macrocycles routinely violate these rules (MW > 500 Da, multiple H-bond donors/acceptors) yet some — like cyclosporine A — still achieve good oral absorption.
+For a drug candidate to be orally bioavailable it must cross the intestinal epithelium. For most small molecules, Lipinski's "Rule of Five" predicts this reasonably well. Macrocycles routinely violate the usual physicochemical limits, yet they can still show useful permeability because their flexible cyclic scaffolds can adopt compact, lipophilic conformations during membrane transit.
 
-This paradox arises because macrocycles can dynamically change conformation: a **polar, extended conformation** in water and a **compact, apolar conformation** in the membrane lipid bilayer, shielding H-bond donors through intramolecular hydrogen bonding. This chameleonic behaviour makes permeability extremely difficult to predict by simple rules and motivates the use of machine learning.
+This paradox arises because macrocycles can dynamically change conformation: a **polar, extended conformation** in water and a **compact, apolar conformation** in the membrane lipid bilayer, shielding polar groups from solvent while presenting a hydrophobic surface to the membrane.
 
 ### PAMPA Assay
 
-The **Parallel Artificial Membrane Permeability Assay (PAMPA)** quantifies passive transcellular permeability. A donor chamber contains the compound dissolved in buffer; it is separated from a receiver chamber by an artificial lipid membrane. After incubation, compound concentration in both chambers is measured. The effective permeability $P_e$ (units: cm/s, typically reported as log $P_e$) is calculated from the flux across the membrane.
+The **Parallel Artificial Membrane Permeability Assay (PAMPA)** quantifies passive transcellular permeability. A donor chamber contains the compound dissolved in buffer; it is separated from a receiving chamber by an artificial phospholipid membrane. Permeability is measured as the rate at which the solute crosses the membrane, yielding a permeability coefficient and a practical estimate of oral absorption potential.
 
 PAMPA is high-throughput, reproducible, and closely models the transcellular permeability component of intestinal absorption, making it the standard *in vitro* assay for early ADME screening.
 
@@ -55,9 +62,9 @@ Synthesising and testing macrocyclic peptides is expensive and slow. A reliable 
 
 ### The generalisation challenge
 
-A model that only interpolates between known scaffolds is of limited use. In real drug discovery, medicinal chemists explore **novel chemical space** — new ring systems, unusual amino acid combinations, non-standard macrolactam/macrolactone backbones. A robust model must generalise to these new scaffolds without having seen them during training.
+A model that only interpolates between known scaffolds is of limited use. In real drug discovery, medicinal chemists explore **novel chemical space** — new ring systems, unusual amino acid combinations, and non-intuitive substitutions. If a predictor memorises training analogues, it will fail when asked to assess genuinely new macrocycles.
 
-This is why the **Murcko scaffold split** (see below) is essential for honest evaluation, and why classical ML baselines like Random Forest and SVR often underperform attention-based models on this stricter metric.
+This is why the **Murcko scaffold split** (see below) is essential for honest evaluation, and why classical ML baselines like Random Forest and SVR often underperform attention-based models on this task when benchmarked under realistic split conditions.
 
 ---
 
@@ -103,7 +110,7 @@ Extended Connectivity Fingerprints encode the **local structural environment** a
 
 Morgan fingerprints capture substructure-level information (specific amino acid types, side-chain patterns, ring junction chemistry) that complements the global descriptors in Part A.
 
-> **Featurisation reference:** This combined descriptor + fingerprint approach was used as the baseline feature set in the Molecular Attention Transformer (MAT) benchmarking study (Maziarka et al., 2020), which demonstrated that attention-based molecular representations outperform fixed fingerprints for scaffold generalisation.
+> **Featurisation reference:** This combined descriptor + fingerprint approach was used as the baseline feature set in the Molecular Attention Transformer (MAT) benchmarking study (Maziarka et al., 2020).
 
 ---
 
@@ -111,11 +118,11 @@ Morgan fingerprints capture substructure-level information (specific amino acid 
 
 ### The problem with random splits
 
-A naive 80/20 random split places structurally similar molecules in both train and test sets. Because many macrocyclic peptide databases contain multiple analogues of the same scaffold, the model effectively interpolates between known chemical neighbours — this inflates performance metrics and does not reflect real predictive power.
+A naive 80/20 random split places structurally similar molecules in both train and test sets. Because many macrocyclic peptide databases contain multiple analogues of the same scaffold, the model may appear accurate while simply memorising familiar chemotypes.
 
 ### Murcko scaffold split (used in this work)
 
-The **Bemis-Murcko scaffold** of a molecule is obtained by stripping all side chains, retaining only the ring systems and the atoms linking them. Two molecules sharing the same Murcko scaffold have the same core ring topology.
+The **Bemis-Murcko scaffold** of a molecule is obtained by stripping all side chains, retaining only the ring systems and the atoms linking them. Two molecules sharing the same Murcko scaffold have a common underlying framework, even if their side chains differ.
 
 The splitting algorithm:
 1. Assign a canonical Murcko scaffold to every molecule
@@ -157,7 +164,7 @@ Finds a regression function within an ε-insensitive tube, using the RBF kernel 
 | `C` | 1.0 | Regularisation strength |
 | `epsilon` | 0.1 | ε-tube half-width |
 
-**Scaling note:** The `StandardScaler` is fitted **only on the training set**. Fitting it on the full dataset before splitting would allow test-set statistics (mean, variance) to influence training — a form of data leakage. The scaler learned from the training set is then applied (transform only) to the test set.
+**Scaling note:** The `StandardScaler` is fitted **only on the training set**. Fitting it on the full dataset before splitting would allow test-set statistics (mean, variance) to influence training and overestimate performance.
 
 ---
 
@@ -211,7 +218,6 @@ python svm_scaffold_split.py --csv /path/to/CycPeptMPDB_Peptide_Assay_PAMPA.csv
 ```
 
 ---
-
 
 ## References
 
